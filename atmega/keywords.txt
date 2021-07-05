@@ -1,0 +1,17 @@
+# -----------------------------------------
+# Syntax colouring for RsbLib demo library
+# -----------------------------------------
+
+# Datatypes (such as objects)
+Mqtt KEYWORD1
+
+#Methods / functions
+begin 	KEYWORD2
+connect KEYWORD2
+publish KEYWORD2
+subscribe KEYWORD2
+getData KEYWORD2
+
+# Constants
+
+
