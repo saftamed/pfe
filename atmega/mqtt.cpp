@@ -1,9 +1,12 @@
 #include "mqtt.h"
 #include <Arduino_JSON.h>
 
+
 // bool ping = false;
 // int count = 0;
+int ii =0;
 
+input record[8];
 unsigned long previousMillis = 0;    
 const long interval = 50000;
 
@@ -20,8 +23,8 @@ void Mqtt::begin(int baudRate) {
 
  initAt();
 
-http(); 
- initTCP();
+//http(); 
+ //initTCP();
   /*
   cli();                     
   TCCR1A = 0;               
@@ -43,6 +46,7 @@ ISR(TIMER1_COMPA_vect){
 }*/
 
 void Mqtt::connect(String server,String server1,String port,String s,bool auth,String user,String pswd) {
+   initTCP();
     serverr =server;
     portt =port;
     clientId = s;
@@ -50,7 +54,7 @@ void Mqtt::connect(String server,String server1,String port,String s,bool auth,S
     userr = user;
     pwdd = pswd;
 
-   Serial.println("AT+CIPSHUT\r");
+   Serial.println(F("AT+CIPSHUT\r"));
   delay(2000);
   byte co[] = {0x00, 0x04, 0x4d, 0x51, 0x54,
                0x54, 0x04, 0xc2, 0x00, 0x3c, 0x00};
@@ -62,7 +66,7 @@ void Mqtt::connect(String server,String server1,String port,String s,bool auth,S
     length-= 4;
 
   }
-  Serial.print("AT+CIPSTART=\"TCP\",\"");
+  Serial.print(F("AT+CIPSTART=\"TCP\",\""));
   delay(1000);
 
   Serial.print(server);
@@ -82,7 +86,7 @@ void Mqtt::connect(String server,String server1,String port,String s,bool auth,S
   delay(5000);
  rr();
 
-  Serial.print("AT+CIPSEND\r");
+  Serial.print(F("AT+CIPSEND\r"));
   delay(3000);
 
  rr();
@@ -114,7 +118,7 @@ void Mqtt::connect(String server,String server1,String port,String s,bool auth,S
 void Mqtt::publish(String topic,  String msg) {
   int length = 5 + topic.length() + msg.length();
   byte pu[] = {0x00};
-  Serial.print("AT+CIPSEND=");
+  Serial.print(F("AT+CIPSEND="));
   Serial.print(length-1);
   Serial.print("\r");
   delay(3000);
@@ -184,30 +188,30 @@ void Mqtt::initHTTP(){
   // mySerial.println("AT+SAPBR=1,1\r");
   // delay(5000);
   // rr();
-  Serial.println("AT+SAPBR=2,1\r");
+  Serial.println(F("AT+SAPBR=2,1\r"));
   delay(1000);
   rr();
 }
 
 void Mqtt::initAt() {
-  Serial.println("AT+SAPBR=3,1,\"Contype\",\"GPRS\"\r");
+  Serial.println(F("AT+SAPBR=3,1,\"Contype\",\"GPRS\"\r"));
 
   delay(1000);
    rr();
-  Serial.println("AT+CIPSHUT\r");
+  Serial.println(F("AT+CIPSHUT\r"));
 
   delay(1000);
    rr();
-  Serial.println("AT+CIPSTATUS\r");
+  Serial.println(F("AT+CIPSTATUS\r"));
   delay(1000);
    rr();
-  Serial.println("AT+CIPMUX=0\r");
+  Serial.println(F("AT+CIPMUX=0\r"));
   delay(1000);
    rr();
-  Serial.println("AT+CSTT=\"internet.ooredoo.tn\"\r");
+  Serial.println(F("AT+CSTT=\"internet.ooredoo.tn\"\r"));
   delay(1000);
    rr();
-  Serial.println("AT+CIPSPRT=0\r");
+  Serial.println(F("AT+CIPSPRT=0\r"));
   delay(1000);
    rr();
 }
@@ -218,19 +222,19 @@ void Mqtt::rr() {
 }
 void Mqtt::http(){
   initHTTP();
-  Serial.println("AT+HTTPTERM\r");
+  Serial.println(F("AT+HTTPTERM\r"));
   delay(1000);
   rr();
-  Serial.println("AT+HTTPINIT\r");
+  Serial.println(F("AT+HTTPINIT\r"));
   delay(1000);
   rr();
-  Serial.println("AT+HTTPPARA=\"URL\",\"752fd59633b5.ngrok.io/espitems/4561\"\r");
+  Serial.println(F("AT+HTTPPARA=\"URL\",\"752fd59633b5.ngrok.io/espitems/4561\"\r"));
   delay(1000);
   rr();
-  Serial.println("AT+HTTPPARA=\"CID\",1\r");
+  Serial.println(F("AT+HTTPPARA=\"CID\",1\r"));
   delay(1000);
   rr();
-  Serial.println("AT+HTTPACTION=0\r");
+  Serial.println(F("AT+HTTPACTION=0\r"));
   delay(2000);
   rr();
   while (Serial.available()<=0) {
@@ -240,44 +244,24 @@ void Mqtt::http(){
   rr();
   Serial.println("AT+HTTPREAD\r");
 
-  String s = Serial.readString();
-  s= s.substring(s.indexOf("["),s.indexOf("]")+1);
+  setAll();
   //Serial.print("response : => ");
   //Serial.println(s);
   Serial.println("AT+HTTPTERM\r");
   delay(1000);
   rr();
 
-  JSONVar myObject = JSON.parse(s);
-  if (JSON.typeof(myObject) == "undefined") {
-  //Serial.println("Parsing input failed!");
-  return;
-  }
-  for (int i=0; i<myObject.length(); i++) {
-  if((String)((const char*)myObject[i]["action"])=="D"){
-    pinMode((int)myObject[i]["pin"],OUTPUT);
-    digitalWrite((int)myObject[i]["pin"],!(int)myObject[i]["value"]);
-  }
-
-  }
+ 
   Serial.println("AT+SAPBR=0,1\r");
   delay(2000);
   rr();
 
+ 
+
 
 }
 void Mqtt::getData(){
- while (true) {
-      if (available()) {
-         line[ lineIndex ] = '\0';                   
-        lineIndex = 0;
-        String s(line);
-    //    Serial.println(line);
-        if(s.indexOf("ok")>=0|| s.indexOf("ERROR")>=0|| s.indexOf("FAIL")>=0){
-          break;
-        }
-      }
-  }
+
 }
 void Mqtt::sendPing(){
 
@@ -290,19 +274,19 @@ void Mqtt::sendPing(){
   }
 }
 bool Mqtt::available(){
-    // if(ping){
-    //   ping = false;
-    //   sendPing();
-    //   count = 0;
-    // }
-unsigned long currentMillis = millis();
+      // if(ping){
+      //   ping = false;
+      //   sendPing();
+      //   count = 0;
+      // }
+  unsigned long currentMillis = millis();
 
-if (currentMillis - previousMillis >= interval) {
-   sendPing();
-  previousMillis = currentMillis;
+  if (currentMillis - previousMillis >= interval) {
+    sendPing();
+    previousMillis = currentMillis;
 
 
-}
+  }
 
 
      while ( Serial.available()>0 ) {
@@ -329,7 +313,7 @@ if (currentMillis - previousMillis >= interval) {
              lineIndex = 0;
           } 
           else if ( c >= 'a' && c <= 'z' ) {        
-            line[ lineIndex++ ] = c-'a'+'A';
+            line[ lineIndex++ ] = c;
           } 
           else if ( (c >= '0' && c <= '9') ||(c >= 'A' && c <= 'Z') || c==':'|| c=='{'|| c==0x22|| c==',') {
             line[ lineIndex++ ] = c;
@@ -367,9 +351,120 @@ String Mqtt::readString(){
   return "";
 }
 
+void Mqtt::sendData(input r){
+ // Serial.println("send");
+  String payload = "{\"action\":\"";
+  payload += r.action;
+  payload += "\",\"pin\":";
+  payload += String(r.pin, DEC);
+  payload += ",\"value\":\"";
+  payload += String(r.value, DEC);
+  payload += "\"}";
 
 
 
+  if (isWifi) {
+    Serial.println(payload);
+    //digitalWrite(2,HIGH);
+  } else {
+     publish("iot-2/4561", payload);
+  }
+}
+void Mqtt::CheckData() {
+  // read the input on analog pin 0:
+
+  for(int i=0;i<ii;i++){
+    int v = 0;
+    if(record[i].action == "A"){
+      v= map(analogRead(record[i].pin),0,1023,0,100);
+      if(v >record[i].value + 5 || v<record[i].value -5){
+        record[i].value = v;
+        sendData(record[i]);
+      }
+    }else if(record[i].action == "I"){
+
+      v= digitalRead(record[i].pin);
+
+           
+      if(v != record[i].value){
+        record[i] = {  record[i].pin,v,"I"};
+        sendData(record[i]);
+         Serial.println(record[i].value);
+      }
+
+    }
+  }
+ 
+}
+void Mqtt::setAll(){
+       while (Serial.available()<=0) {
+       }
+
+  char  c = Serial.read();
+
+  if(!isWifi){
+    Serial.readStringUntil('[');
+  }
+  while ( true ) {
+      String s = Serial.readStringUntil('}');
+        while (Serial.available()<=0) {
+        }
+          char  c = Serial.read();
+          s+="}";
+
+        //Serial.println(s);
+        setActions(s);
+          if(c == ']')
+          {
+            break;
+          }
+      
+
+  }
+
+
+}
+
+
+
+void Mqtt::setActions(String line){
+  JSONVar obj = JSON.parse(line);
+  if (JSON.typeof(obj) == "undefined") {
+    return;
+  }
+    String ss = (String)((const char*)obj["action"]);
+    Serial.println(ss);
+
+    if(ss=="D"){
+      pinMode((int)obj["pin"],OUTPUT);
+      String s =(const char*) obj["value"];
+      digitalWrite((int)obj["pin"],s.toInt());
+    }else if(ss=="P"){
+      String s =(const char*) obj["value"];
+    //s.trim();
+      analogWrite((int)obj["pin"],map( s.toInt(), 0, 100, 0, 1023));
+    }else if(ss=="A"){
+        int ss =getIndex((int)obj["pin"]);
+        record[ss]={ (int)obj["pin"],record[ss].value, "A"};            
+    }else if(ss=="I"){
+        pinMode( (int)obj["pin"],INPUT);
+        int ss =getIndex( (int)obj["pin"]);
+        record[ss]={  (int)obj["pin"],record[ss].value, "I"};
+    }else{
+      
+    }
+  
+  
+
+ 
+}
+int Mqtt::getIndex(int pin){
+   for(int i=0;i<ii;i++){
+     if(pin == record[i].pin)
+      return i;
+   }
+   return ii++;
+}
 
 
 

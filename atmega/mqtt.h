@@ -7,7 +7,15 @@
 #include "WProgram.h"
 #endif
 #define LINE_BUFFER_LENGTH 256
+typedef struct
+  {
+      int pin;
+      int value;
+      String action;
+  }  input;
+
 class Mqtt {
+  
 public:
   Mqtt(bool displayMsg);
   void begin(int baudRate = 4800);
@@ -18,6 +26,11 @@ public:
   void getData();
   bool available();
   String readString();
+      void http();
+      void setActions(String line);
+      void setAll();
+      void CheckData();
+      bool isWifi = false;
 
 
 private:
@@ -36,10 +49,12 @@ private:
   bool withauth = false;
   String topicc="";
   void sendPing();
-    void http();
   bool connected =false;
   int timeOut = 0;
   bool sendCmd(String cmd,int timeout);
+  int getIndex(int pin);
+  void sendData(input r);
+  
  
 };
 #endif

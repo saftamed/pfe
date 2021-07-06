@@ -34,6 +34,7 @@ WiFiClient wifiClient;
 
 void callback(char* topic, byte* payload, unsigned int payloadLength) {
   String myObject = (char *)payload;
+  Serial.print("IOT")  ;
   Serial.println(myObject)  ;
          
 }
@@ -112,8 +113,11 @@ void loop() {
   }
   if(Serial.available()){
       String s= Serial.readStringUntil('\n');
-      Serial.println(s);
-      client.publish(topic.c_str(),s.c_str());
+      //Serial.println(s);
+       if(s.indexOf("{")>=0 && s.indexOf("}")>=0){
+          client.publish(topic.c_str(),s.c_str());
+
+       }
     //Serial.println("OK");
    
   
