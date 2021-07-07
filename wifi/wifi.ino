@@ -89,7 +89,7 @@ while(Serial.available()<=0){
   if(s.indexOf("at")>=0){
     Serial.println("wifi");
   }  
-
+Serial.println("wifi 1");
 
   // serveForPwd();
   // while(pwd){
@@ -100,6 +100,7 @@ while(Serial.available()<=0){
 
   wifiConnect();
   delay(2000);
+  Serial.println("http");
   httpGet();
   mqttConnect();
 }

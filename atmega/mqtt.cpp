@@ -1,7 +1,11 @@
 #include "mqtt.h"
 #include <Arduino_JSON.h>
 
-
+const char AT_CMD_SEND[] PROGMEM = "AT+CIPSEND=";  
+const char SERVER[] PROGMEM = "0.tcp.ngrok.io";  
+const char PORT[] PROGMEM = "12396";
+const char TOPIC[] PROGMEM = "iot-2/";   
+const char TOKEN[] PROGMEM = "4561";  
 // bool ping = false;
 // int count = 0;
 int ii =0;
@@ -118,7 +122,7 @@ void Mqtt::connect(String server,String server1,String port,String s,bool auth,S
 void Mqtt::publish(String topic,  String msg) {
   int length = 5 + topic.length() + msg.length();
   byte pu[] = {0x00};
-  Serial.print(F("AT+CIPSEND="));
+  Serial.print(AT_CMD_SEND);
   Serial.print(length-1);
   Serial.print("\r");
   delay(3000);
@@ -140,7 +144,7 @@ void Mqtt::subscribe(String topic) {
   int length = 7 + topic.length();
   byte su[] = {0x9b, 0x9c, 0x00};
   byte s[] = {0x00};
-  Serial.print("AT+CIPSEND=");
+  Serial.print(AT_CMD_SEND);
   Serial.print(length);
   Serial.print("\r");
   delay(1000);
@@ -228,7 +232,7 @@ void Mqtt::http(){
   Serial.println(F("AT+HTTPINIT\r"));
   delay(1000);
   rr();
-  Serial.println(F("AT+HTTPPARA=\"URL\",\"752fd59633b5.ngrok.io/espitems/4561\"\r"));
+  Serial.println(F("AT+HTTPPARA=\"URL\",\"5c64275f4ca2.ngrok.io/espitems/4561\"\r"));
   delay(1000);
   rr();
   Serial.println(F("AT+HTTPPARA=\"CID\",1\r"));
@@ -331,7 +335,7 @@ String Mqtt::readString(){
         line[ lineIndex ] = '\0';                   
         lineIndex = 0;
         String s(line);
-        if(s.indexOf("IOT")>=0){
+        if(s.indexOf("IOT")>=0 || s.indexOf("iot")>=0){
           return s.substring(s.indexOf("{"));
         }else if(s.indexOf("OK")>=0){
           return "OK";
