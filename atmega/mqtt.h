@@ -6,12 +6,13 @@
 #else
 #include "WProgram.h"
 #endif
-#define LINE_BUFFER_LENGTH 256
+#define LINE_BUFFER_LENGTH 200
 typedef struct
   {
-      int pin;
-      int value;
-      String action;
+      byte pin;
+      byte value;
+      char action;
+      byte data[6];
   }  input;
 
 class Mqtt {
@@ -19,10 +20,10 @@ class Mqtt {
 public:
   Mqtt(bool displayMsg);
   void begin(int baudRate = 4800);
-  void connect(String server, String server1, String port, String s,
-               bool auth = false, String user = "", String pswd = "");
-  void publish(String topic, String msg);
-  void subscribe(String topic);
+  void connect(/*String server, String server1, String port, String s,
+               bool auth = false, String user = "", String pswd = ""*/);
+  void publish(String msg);
+  void subscribe();
   void getData();
   bool available();
   String readString();
@@ -37,17 +38,11 @@ private:
   void initAt();
   void initTCP();
   void initHTTP();
-
+  byte bcdToDec(byte val);
+  byte decToBcd(byte val);
   void rr();
   char line[LINE_BUFFER_LENGTH];
   int lineIndex = 0;
-  String serverr;
-  String userr ="";
-  String pwdd ="";
-  String portt ="1883";
-  String clientId ="";
-  bool withauth = false;
-  String topicc="";
   void sendPing();
   bool connected =false;
   int timeOut = 0;

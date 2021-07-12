@@ -1,16 +1,19 @@
 #include "mqtt.h"
 #include <Arduino_JSON.h>
+#include "Wire.h"
+#define DS3231_I2C_ADDRESS 0x68
+const char AT_CMD_SEND[]  = "AT+CIPSEND=";  
 
-const char AT_CMD_SEND[] PROGMEM = "AT+CIPSEND=";  
-const char SERVER[] PROGMEM = "0.tcp.ngrok.io";  
-const char PORT[] PROGMEM = "12396";
-const char TOPIC[] PROGMEM = "iot-2/";   
-const char TOKEN[] PROGMEM = "4561";  
+const char SERVER[]  = "0.tcp.ngrok.io";  
+const char PORT[]  = "12396";
+const char TOPIC[]  = "iot-2/";   
+const char TOKEN[]  = "4561";  
 // bool ping = false;
 // int count = 0;
 int ii =0;
 
-input record[8];
+input record[10];
+
 unsigned long previousMillis = 0;    
 const long interval = 50000;
 
@@ -22,6 +25,7 @@ Mqtt::Mqtt(bool displayMsg) {
 
 void Mqtt::begin(int baudRate) {
  
+
  // Serial.begin(baudRate);  
 
 
@@ -49,40 +53,33 @@ ISR(TIMER1_COMPA_vect){
 
 }*/
 
-void Mqtt::connect(String server,String server1,String port,String s,bool auth,String user,String pswd) {
+void Mqtt::connect() {
    initTCP();
-    serverr =server;
-    portt =port;
-    clientId = s;
-    withauth = auth;
-    userr = user;
-    pwdd = pswd;
-
    Serial.println(F("AT+CIPSHUT\r"));
   delay(2000);
-  byte co[] = {0x00, 0x04, 0x4d, 0x51, 0x54,
+  const byte co[] = {0x00, 0x04, 0x4d, 0x51, 0x54,
                0x54, 0x04, 0xc2, 0x00, 0x3c, 0x00};
-  byte pwd[] = {0x00};
+  const byte pwd[] = {0x00};
 
-  int length = s.length()+user.length()+pswd.length()+16;
-  if(!auth){
-    co[7] = 0x02;
-    length-= 4;
+  int length = /*+user.length()+pswd.length()*/20;
+  // if(!auth){
+  //   co[7] = 0x02;
+  //   length-= 4;
 
-  }
+  // }
   Serial.print(F("AT+CIPSTART=\"TCP\",\""));
   delay(1000);
 
-  Serial.print(server);
+  Serial.print(SERVER);
   delay(1000);
   rr();
-    Serial.print(server1);
-  delay(1000);
-  rr();
+  //   Serial.print(server1);
+  // delay(1000);
+  // rr();
    Serial.print("\",\"");
   delay(1000);
  rr();
-  Serial.print(port);
+  Serial.print(PORT);
   delay(1000);
  rr();
   Serial.println("\"\r");
@@ -98,18 +95,18 @@ void Mqtt::connect(String server,String server1,String port,String s,bool auth,S
   Serial.write(length);
   Serial.write(co, 11);
 
-  Serial.write(s.length());
-  Serial.print(s);
+  Serial.write(4);
+  Serial.print(TOKEN);
  
-  if(auth){
-    Serial.write(pwd, 1);
-    Serial.write(user.length());
-    Serial.print(user);
-    Serial.write(pwd, 1);  
+  // if(auth){
+  //   Serial.write(pwd, 1);
+  //   Serial.write(user.length());
+  //   Serial.print(user);
+  //   Serial.write(pwd, 1);  
 
-    Serial.write(pswd.length());
-    Serial.print(pswd);
-  }
+  //   Serial.write(pswd.length());
+  //   Serial.print(pswd);
+  // }
 
 
   delay(1000);
@@ -119,9 +116,9 @@ void Mqtt::connect(String server,String server1,String port,String s,bool auth,S
   delay(1000);
  rr();
 }
-void Mqtt::publish(String topic,  String msg) {
-  int length = 5 + topic.length() + msg.length();
-  byte pu[] = {0x00};
+void Mqtt::publish(String msg) {
+  int length = 15 + msg.length();
+ const byte pu[] = {0x00};
   Serial.print(AT_CMD_SEND);
   Serial.print(length-1);
   Serial.print("\r");
@@ -130,8 +127,9 @@ void Mqtt::publish(String topic,  String msg) {
   Serial.write(0x31);
   Serial.write(length - 3);
   Serial.write(pu, 1);
-  Serial.write(topic.length());
-  Serial.print(topic);
+  Serial.write(10);
+  Serial.print(TOPIC);
+  Serial.print(TOKEN);
   Serial.print(msg);
   delay(1000);
    rr();
@@ -139,11 +137,10 @@ void Mqtt::publish(String topic,  String msg) {
   delay(1000);
    rr();
 }
-void Mqtt::subscribe(String topic) {
-  topicc =topic;
-  int length = 7 + topic.length();
-  byte su[] = {0x9b, 0x9c, 0x00};
-  byte s[] = {0x00};
+void Mqtt::subscribe() {
+  int length = 17;
+  const byte su[] = {0x9b, 0x9c, 0x00};
+  const byte s[] = {0x00};
   Serial.print(AT_CMD_SEND);
   Serial.print(length);
   Serial.print("\r");
@@ -152,8 +149,9 @@ void Mqtt::subscribe(String topic) {
   Serial.write(0x82);
   Serial.write(length - 2);
   Serial.write(su, 3);
-  Serial.write(topic.length());
-  Serial.print(topic);
+  Serial.write(10);
+  Serial.print(TOPIC);
+   Serial.print(TOKEN);
   Serial.write(s, 1);
   Serial.write(0X1a);
   delay(3000);
@@ -165,20 +163,19 @@ void Mqtt::initTCP(){
   // mySerial.println("AT+CIICR\r");
   // delay(5000);
   // rr();
-  Serial.println("AT+CIFSR\r");
-  delay(1000);
-  rr();  
+  sendCmd("AT+CIFSR\r",1);
+ 
 }
 bool Mqtt::sendCmd(String cmd,int timeout){
   Serial.println(cmd);
   timeOut = 0;
   while (Serial.available()<=0) {
     timeOut++;
-    if(timeOut>=timeout){
+    if((timeOut/10)>timeout){
       return false;
     }
-    delay(1000);
-    Serial.print(".");
+    delay(100);
+    //Serial.print(".");
   }
   String s = Serial.readString();
   //Serial.println(s);
@@ -192,32 +189,17 @@ void Mqtt::initHTTP(){
   // mySerial.println("AT+SAPBR=1,1\r");
   // delay(5000);
   // rr();
-  Serial.println(F("AT+SAPBR=2,1\r"));
-  delay(1000);
-  rr();
+  sendCmd(F("AT+SAPBR=2,1\r"),1);
+
 }
 
 void Mqtt::initAt() {
-  Serial.println(F("AT+SAPBR=3,1,\"Contype\",\"GPRS\"\r"));
-
-  delay(1000);
-   rr();
-  Serial.println(F("AT+CIPSHUT\r"));
-
-  delay(1000);
-   rr();
-  Serial.println(F("AT+CIPSTATUS\r"));
-  delay(1000);
-   rr();
-  Serial.println(F("AT+CIPMUX=0\r"));
-  delay(1000);
-   rr();
-  Serial.println(F("AT+CSTT=\"internet.ooredoo.tn\"\r"));
-  delay(1000);
-   rr();
-  Serial.println(F("AT+CIPSPRT=0\r"));
-  delay(1000);
-   rr();
+  sendCmd(F("AT+SAPBR=3,1,\"Contype\",\"GPRS\"\r"),1);
+ sendCmd(F("AT+CIPSHUT\r"),1);
+  sendCmd(F("AT+CIPSTATUS\r"),1);
+  sendCmd(F("AT+CIPMUX=0\r"),1);
+  sendCmd(F("AT+CSTT=\"internet.ooredoo.tn\"\r"),1);
+  sendCmd(F("AT+CIPSPRT=0\r"),1);
 }
 void Mqtt::rr() {
   while (Serial.available() >= 1) {
@@ -226,39 +208,17 @@ void Mqtt::rr() {
 }
 void Mqtt::http(){
   initHTTP();
-  Serial.println(F("AT+HTTPTERM\r"));
-  delay(1000);
-  rr();
-  Serial.println(F("AT+HTTPINIT\r"));
-  delay(1000);
-  rr();
-  Serial.println(F("AT+HTTPPARA=\"URL\",\"5c64275f4ca2.ngrok.io/espitems/4561\"\r"));
-  delay(1000);
-  rr();
-  Serial.println(F("AT+HTTPPARA=\"CID\",1\r"));
-  delay(1000);
-  rr();
-  Serial.println(F("AT+HTTPACTION=0\r"));
-  delay(2000);
-  rr();
-  while (Serial.available()<=0) {
-  //Serial.print(".");
-  delay(1000);
-  }
-  rr();
+  sendCmd(F("AT+HTTPTERM\r"),1);
+  sendCmd(F("AT+HTTPINIT\r"),1);
+  sendCmd(F("AT+HTTPPARA=\"URL\",\"5c64275f4ca2.ngrok.io/espitems/4561\"\r"),1);
+  sendCmd(F("AT+HTTPPARA=\"CID\",1\r"),1);
+  sendCmd(F("AT+HTTPACTION=0\r"),10);
   Serial.println("AT+HTTPREAD\r");
 
   setAll();
-  //Serial.print("response : => ");
-  //Serial.println(s);
-  Serial.println("AT+HTTPTERM\r");
-  delay(1000);
-  rr();
+  sendCmd("AT+HTTPTERM\r",1);
+  sendCmd("AT+SAPBR=0,1\r",2);
 
- 
-  Serial.println("AT+SAPBR=0,1\r");
-  delay(2000);
-  rr();
 
  
 
@@ -342,9 +302,9 @@ String Mqtt::readString(){
         }else if(s.indexOf("CLOSED")>=0 || s.indexOf("ERROR")>=0|| s.indexOf("FAIL")>=0){
               //reconnect
                  connected = false;
-              connect(serverr, "ernetofthings.ibmcloud.com",portt,clientId,withauth,userr,pwdd);
+              connect();
               delay(2000);
-              subscribe(topicc);
+              subscribe();
               line[ 0 ] = '\0';
               return "ERROR";
         }
@@ -357,11 +317,11 @@ String Mqtt::readString(){
 
 void Mqtt::sendData(input r){
  // Serial.println("send");
-  String payload = "{\"action\":\"";
+  String payload = F("{\"action\":\"");
   payload += r.action;
-  payload += "\",\"pin\":";
+  payload += F("\",\"pin\":");
   payload += String(r.pin, DEC);
-  payload += ",\"value\":\"";
+  payload += F(",\"value\":\"");
   payload += String(r.value, DEC);
   payload += "\"}";
 
@@ -371,7 +331,7 @@ void Mqtt::sendData(input r){
     Serial.println(payload);
     //digitalWrite(2,HIGH);
   } else {
-     publish("iot-2/4561", payload);
+     publish(payload);
   }
 }
 void Mqtt::CheckData() {
@@ -379,22 +339,54 @@ void Mqtt::CheckData() {
 
   for(int i=0;i<ii;i++){
     int v = 0;
-    if(record[i].action == "A"){
+    if(record[i].action == 'A'){
       v= map(analogRead(record[i].pin),0,1023,0,100);
       if(v >record[i].value + 5 || v<record[i].value -5){
         record[i].value = v;
         sendData(record[i]);
       }
-    }else if(record[i].action == "I"){
+    }else if(record[i].action == 'I'){
 
       v= digitalRead(record[i].pin);
 
            
       if(v != record[i].value){
-        record[i] = {  record[i].pin,v,"I"};
+        record[i] = {  record[i].pin,v,'I'};
         sendData(record[i]);
          Serial.println(record[i].value);
       }
+
+    }else if(record[i].action == 'T'){
+        Wire.beginTransmission(DS3231_I2C_ADDRESS);
+        Wire.write(0); // set DS3231 register pointer to 00h
+        Wire.endTransmission();
+
+        // request seven bytes of data from DS3231 starting from register 00h
+        Wire.requestFrom(DS3231_I2C_ADDRESS, 4);
+        byte second = bcdToDec(Wire.read()  /*& 0x7f*/);
+        byte minute = bcdToDec(Wire.read());
+        byte hour = bcdToDec(Wire.read() /*& 0x3f*/);
+        byte dayOfWeek = bcdToDec(Wire.read());
+        // byte dayOfMonth = bcdToDec(Wire.read());
+        // byte month = bcdToDec(Wire.read());
+        // byte year = bcdToDec(Wire.read());
+
+        byte off = 0 ;
+        if(record[i].value == 1){
+          off = 3;                    
+        }
+
+        if(dayOfWeek == record[i].data[0+off] || record[i].data[0+off]>8 ){
+            if(hour == record[i].data[1+off]){
+              if(minute >= record[i].data[2+off]){
+                record[i].value = !record[i].value;
+                digitalWrite(record[i].pin, record[i].value);
+                 sendData(record[i]);
+              }
+            }
+        }
+
+
 
     }
   }
@@ -449,11 +441,52 @@ void Mqtt::setActions(String line){
       analogWrite((int)obj["pin"],map( s.toInt(), 0, 100, 0, 1023));
     }else if(ss=="A"){
         int ss =getIndex((int)obj["pin"]);
-        record[ss]={ (int)obj["pin"],record[ss].value, "A"};            
+        record[ss]={ (int)obj["pin"],record[ss].value, 'A'};            
     }else if(ss=="I"){
         pinMode( (int)obj["pin"],INPUT);
         int ss =getIndex( (int)obj["pin"]);
-        record[ss]={  (int)obj["pin"],record[ss].value, "I"};
+        record[ss]={  (int)obj["pin"],record[ss].value, 'I'};
+    }
+    else if(ss=="T"){
+       pinMode( (int)obj["pin"],OUTPUT);
+        int ss =getIndex( (int)obj["pin"]);
+        String s =(const char*) obj["o"];
+
+
+
+        record[ss]={  (int)obj["pin"],record[ss].value, 'T'};
+        byte data_num = 0;
+        while(s.indexOf(",")!=-1){
+          record[ss].data[ data_num ] = s.substring(0,s.indexOf(",")).toInt();
+          data_num++; 
+          s = s.substring(s.indexOf(",")+1);
+        }
+         record[ss].data[ data_num ] = s.toInt();
+
+
+    }
+    else if(ss=="R"){
+       String s =(const char*) obj["T"];
+        byte data_num = 0;
+        byte time[6];
+        while(s.indexOf(",")!=-1){
+          time[ data_num ] = s.substring(0,s.indexOf(",")).toInt();
+          data_num++; 
+          s = s.substring(s.indexOf(",")+1);
+        }
+        if(data_num >=5){
+          Wire.beginTransmission(DS3231_I2C_ADDRESS);
+          Wire.write(0); // set next input to start at the seconds register
+          Wire.write(0); // set seconds
+          Wire.write(decToBcd(time[5])); // set minutes
+          Wire.write(decToBcd(time[4])); // set hours
+          Wire.write(decToBcd(time[0])); // set day of week (1=Sunday, 7=Saturday)
+          Wire.write(decToBcd(time[1])); // set date (1 to 31)
+          Wire.write(decToBcd(time[2])); // set month
+          Wire.write(decToBcd(time[3])); // set year (0 to 99)
+          Wire.endTransmission();
+
+        }
     }else{
       
     }
@@ -472,7 +505,14 @@ int Mqtt::getIndex(int pin){
 
 
 
-
+byte Mqtt::bcdToDec(byte val)
+{
+  return ( (val / 16 * 10) + (val % 16) );
+}
+byte Mqtt::decToBcd(byte val)
+{
+  return ( (val / 10 * 16) + (val % 10) );
+}
 
 
 
