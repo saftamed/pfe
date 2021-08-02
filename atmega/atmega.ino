@@ -65,9 +65,11 @@ bool getModule(int timeout){
    String s= Serial.readStringUntil('\n');
   if(s.indexOf("OK")>=0){
     mqtt.isWifi = false;
+    mqtt.print(F("Sim Detected "));
     return true;
   }else if(s.indexOf("wifi")>=0){
     mqtt.isWifi = true;
+    mqtt.print(F("Wifi Detected"));
     return true;
   }
   return false;

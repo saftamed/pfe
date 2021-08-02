@@ -6,6 +6,7 @@
 #else
 #include "WProgram.h"
 #endif
+#include <Arduino_JSON.h>
 #define LINE_BUFFER_LENGTH 200
 typedef struct
   {
@@ -23,6 +24,8 @@ public:
   void connect(/*String server, String server1, String port, String s,
                bool auth = false, String user = "", String pswd = ""*/);
   void publish(String msg);
+  void print(String msg,int l = 1);
+  void beginDebug();
   void subscribe();
   void getData();
   bool available();
@@ -40,10 +43,12 @@ private:
   void initHTTP();
   byte bcdToDec(byte val);
   byte decToBcd(byte val);
+  bool debug = true;
   void rr();
   char line[LINE_BUFFER_LENGTH];
   int lineIndex = 0;
   void sendPing();
+ void TimeSet(JSONVar obj);
   bool connected =false;
   int timeOut = 0;
   bool sendCmd(String cmd,int timeout);
