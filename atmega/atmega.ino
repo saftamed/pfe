@@ -4,7 +4,7 @@
 Mqtt mqtt(false);
 
 
-int publishInterval = 1500; 
+//int publishInterval = 1500; 
 long lastPublishMillis=0;
 
 void setup() {
@@ -45,7 +45,7 @@ void loop() {
      mqtt.setActions(line);
     }
   }
-    if (millis() - lastPublishMillis > publishInterval) {
+    if (millis() - lastPublishMillis > mqtt.publishInterval) {
     mqtt.CheckData();
     lastPublishMillis = millis();
   }

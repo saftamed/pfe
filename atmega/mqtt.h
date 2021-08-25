@@ -35,6 +35,7 @@ public:
       void setAll();
       void CheckData();
       bool isWifi = false;
+  int publishInterval = 1500;
 
 
 private:

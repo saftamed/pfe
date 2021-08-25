@@ -349,7 +349,7 @@ void Mqtt::CheckData() {
 
   for (int i = 0; i < ii; i++) {
     int v = 0;
-    if (record[i].action == 'A') {
+    if (record[i].action == 'A' || record[i].action == 'C') {
       v = map(analogRead(record[i].pin), 0, 1023, 0, 100);
       if (v > record[i].value + 5 || v < record[i].value - 5) {
         record[i].value = v;
@@ -462,9 +462,9 @@ void Mqtt::setActions(String line) {
       analogWrite((int)obj["pin"], map(s.toInt(), 0, 100, 0, 1023));
       TimeSet(obj);
     }
-  } else if (ss == "A") {
+  } else if (ss == "A" || ss == "C") {
     int ss = getIndex((int)obj["pin"]);
-    record[ss] = { (int)obj["pin"], record[ss].value, 'A' };
+    record[ss] = { (int)obj["pin"], record[ss].value, ss == "A"? 'A':'C' };
   } else if (ss == "I") {
     pinMode((int)obj["pin"], INPUT);
     int ss = getIndex((int)obj["pin"]);
@@ -510,9 +510,10 @@ void Mqtt::setActions(String line) {
 
   } else if (ss == "Z") {
     // String s = (const char*)obj["host"];
-    debug = (int)obj["pin"] ;
+    debug = (int)obj["debug"] ;
+    publishInterval = (int)obj["tri"] ;
   }else if (ss == "L") {
-     String msg = (const char*)obj["msg"];
+     String msg = (const char*)obj["m"];
      print(msg,2);
   }
 }
