@@ -31,10 +31,11 @@ const long interval = 50000;
 //SoftwareSerial mySerial(14, 12);
 Mqtt::Mqtt(bool displayMsg) {
   beginDebug();
- // print("hi");
+  // print("hi");
 }
 
 void Mqtt::beginDebug() {
+  if (!debug) return;
   lcd.init();  // initialize
   lcd.backlight();
 }
@@ -381,7 +382,12 @@ void Mqtt::CheckData() {
       byte month = bcdToDec(Wire.read());
       byte year = bcdToDec(Wire.read());
 
-      //        // send it to the serial monitor
+      // //        // send it to the serial monitor
+      //     Serial.print(dayOfWeek, DEC);
+      // // convert the byte variable to a decimal number when displayed
+  
+      // // convert the byte variable to a decimal number when displayed
+      // Serial.print(":");
       // Serial.print(hour, DEC);
       // // convert the byte variable to a decimal number when displayed
       // Serial.print(":");
@@ -390,18 +396,26 @@ void Mqtt::CheckData() {
       //   Serial.print("0");
       // }
 
-      // Serial.println(minute, DEC);
+      // Serial.print(minute, DEC);
 
       byte off = 0;
       if (record[i].value == 1) {
         off = 3;
       }
 
-
+// Serial.print("  =>   ");
+//          Serial.print(record[i].data[0]);
+//          Serial.print(record[i].data[1]);
+//          Serial.print(record[i].data[2]);
+//          Serial.print(record[i].data[3]);
+//          Serial.print(record[i].data[4]);
+//          Serial.println(record[i].data[5]);
 
       if (dayOfWeek == record[i].data[0 + off] || record[i].data[0 + off] > 8) {
         if (hour == record[i].data[1 + off]) {
+          //  Serial.print("hh");
           if (minute == record[i].data[2 + off] + record[i].value) {
+            //  Serial.print("mm");
             record[i].value = !record[i].value;
             digitalWrite(record[i].pin, record[i].value);
             sendData(record[i]);
@@ -416,7 +430,8 @@ void Mqtt::setAll() {
   }
 
   char c = Serial.read();
-
+  if (c == 'F')
+    return;
   if (!isWifi) {
     Serial.readStringUntil('[');
   }
@@ -438,18 +453,19 @@ void Mqtt::setAll() {
 
 
 void Mqtt::setActions(String line) {
+  //  Serial.println(line);
   JSONVar obj = JSON.parse(line);
   if (JSON.typeof(obj) == "undefined") {
     return;
   }
   String ss = (String)((const char*)obj["action"]);
-  Serial.println(ss);
+  // Serial.println(ss);
   print(ss + ": " + (const char*)obj["pin"] + " = " + (const char*)obj["value"]);
   if (ss == "D") {
     pinMode((int)obj["pin"], OUTPUT);
     String s = (const char*)obj["value"];
     digitalWrite((int)obj["pin"], s.toInt());
-    TimeSet(obj);
+    TimeSet((const char*)obj["o"],(int)obj["pin"]);
   } else if (ss == "P") {
     String s = (const char*)obj["value"];
     if ((String)((const char*)obj["o"]) == "S") {
@@ -460,11 +476,11 @@ void Mqtt::setActions(String line) {
     } else {
       ser[(int)obj["pin"] - 9].detach();
       analogWrite((int)obj["pin"], map(s.toInt(), 0, 100, 0, 1023));
-      TimeSet(obj);
+      TimeSet((const char*)obj["o"],(int)obj["pin"]);
     }
   } else if (ss == "A" || ss == "C") {
     int ss = getIndex((int)obj["pin"]);
-    record[ss] = { (int)obj["pin"], record[ss].value, ss == "A"? 'A':'C' };
+    record[ss] = { (int)obj["pin"], record[ss].value, ss == "A" ? 'A' : 'C' };
   } else if (ss == "I") {
     pinMode((int)obj["pin"], INPUT);
     int ss = getIndex((int)obj["pin"]);
@@ -472,16 +488,16 @@ void Mqtt::setActions(String line) {
   } else if (ss == "T") {
 
     pinMode((int)obj["pin"], OUTPUT);
-    TimeSet(obj);
+    TimeSet((const char*)obj["o"],(int)obj["pin"]);
 
   } else if (ss == "R") {
     String s = (const char*)obj["T"];
-    Serial.println(s);
+    // Serial.println(s);
     byte data_num = 0;
     byte time[6];
     while (s.indexOf(",") != -1) {
       time[data_num] = s.substring(0, s.indexOf(",")).toInt();
-      Serial.println(time[data_num], DEC);
+      // Serial.println(time[data_num], DEC);
       data_num++;
       s = s.substring(s.indexOf(",") + 1);
     }
@@ -510,25 +526,28 @@ void Mqtt::setActions(String line) {
 
   } else if (ss == "Z") {
     // String s = (const char*)obj["host"];
-    debug = (int)obj["debug"] ;
-    publishInterval = (int)obj["tri"] ;
-  }else if (ss == "L") {
-     String msg = (const char*)obj["m"];
-     print(msg,2);
+    debug = (int)obj["debug"];
+    publishInterval = (int)obj["tri"];
+  } else if (ss == "L") {
+    String msg = (const char*)obj["m"];
+    print(msg, 2);
   }
 }
-void Mqtt::TimeSet(JSONVar obj) {
-  String s = (const char*)obj["o"];
-  if (s.length() < 10) return;
-  int ss = getIndex((int)obj["pin"]);
-  record[ss] = { (int)obj["pin"], record[ss].value, 'T' };
-  byte data_num = 0;
-  while (s.indexOf(",") != -1) {
-    record[ss].data[data_num] = s.substring(0, s.indexOf(",")).toInt();
-    data_num++;
-    s = s.substring(s.indexOf(",") + 1);
-  }
-  record[ss].data[data_num] = s.toInt();
+void Mqtt::TimeSet(String obj,int pin) {
+  String s = obj;
+   if (s.length() < 10) return;
+  int ss = getIndex(pin);
+  record[ss] = { pin, record[ss].value, 'D' };
+    // Serial.println(s);
+    byte data_num = 0;
+    while (s.indexOf(",") != -1) {
+       record[ss].data[data_num] = s.substring(0, s.indexOf(",")).toInt();
+      // Serial.println( record[ss].data[data_num], DEC);
+      data_num++;
+      s = s.substring(s.indexOf(",") + 1);
+    }
+
+
 }
 int Mqtt::getIndex(int pin) {
   for (int i = 0; i < ii; i++) {

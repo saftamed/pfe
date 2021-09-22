@@ -43,7 +43,7 @@ ESP8266WebServer server(80);
 
 
 void handleRoot() {
-  String response ="";//F("<style>.form input[type=password],.form select{width:100%;padding:12px 20px;margin:8px 0;display:inline-block;border:1px solid #ccc;border-radius:4px;box-sizing:border-box}.form input[type=submit]{width:100%;background-color:#4caf50;color:white;padding:14px 20px;margin:8px 0;border:0;border-radius:4px;cursor:pointer}.form input[type=submit]:hover{background-color:#45a049}.form{border-radius:5px;background-color:#f2f2f2;padding:20px}</style><form class='form' action=\"update\"><select name=\"ssid\">");
+  String response =F("<style>.form input[type=password],.form select{width:100%;padding:12px 20px;margin:8px 0;display:inline-block;border:1px solid #ccc;border-radius:4px;box-sizing:border-box}.form input[type=submit]{width:100%;background-color:#4caf50;color:white;padding:14px 20px;margin:8px 0;border:0;border-radius:4px;cursor:pointer}.form input[type=submit]:hover{background-color:#45a049}.form{border-radius:5px;background-color:#f2f2f2;padding:20px}</style><form class='form' action=\"update\"><select name=\"ssid\">");
   byte numSsid = WiFi.scanNetworks();
 
   for (int thisNet = 0; thisNet<numSsid; thisNet++) {
@@ -60,6 +60,11 @@ void handleUpdate(){
   server.send(200, "text/html", "ok");
    //   Serial.println(ssid);
    // Serial.println(password);
+     wifiConnect();
+  // delay(2000);
+  // Serial.println("http");
+  httpGet();
+  mqttConnect();
    delay(3000);
   pwd = false;  
 
@@ -69,7 +74,7 @@ void serveForPwd(){
     WiFi.mode(WIFI_AP_STA);
   //Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");    
   //Serial.print("Configuring access point...");
-  WiFi.softAP("safta", "ap_password");
+  WiFi.softAP("safta", "00000000");
   IPAddress myIP = WiFi.softAPIP();
   //Serial.print("AP IP address: ");
   //Serial.println(myIP);
@@ -82,16 +87,19 @@ void serveForPwd(){
 void setup() {
 
   Serial.begin(9600);
-while(Serial.available()<=0){
-
-}
-  String s= Serial.readStringUntil('\n');
-  if(s.indexOf("at")>=0){
+   while(!setModule(3));
     Serial.println("wifi");
-  }  
-Serial.println("wifi 1");
 
-  // serveForPwd();
+// while(Serial.available()<=0){
+
+// }
+//   String s= Serial.readStringUntil('\n');
+//   if(s.indexOf("at")>=0){
+//     Serial.println("wifi");
+//   }  
+// Serial.println("wifi 1");
+
+  serveForPwd();
   // while(pwd){
   // server.handleClient();
   // }
@@ -99,8 +107,8 @@ Serial.println("wifi 1");
 
 
   wifiConnect();
-  delay(2000);
-  Serial.println("http");
+  // delay(2000);
+  // Serial.println("http");
   httpGet();
   mqttConnect();
 }
@@ -123,7 +131,7 @@ void loop() {
    
   
   }
-  // server.handleClient();
+  server.handleClient();
 }
 
 void wifiConnect() {
@@ -180,6 +188,23 @@ void httpGet(){
       http.end();
     }
     else {
-     
+      Serial.println("F");
     }
+}
+
+
+bool setModule(int timeout){
+   int timeOut = 0;
+  while (Serial.available()<=0) {
+    timeOut++;
+    if(timeOut>=timeout){
+      return false;
+    }
+    delay(1000);
+  }
+   String s= Serial.readStringUntil('\n');
+  if(s.indexOf("at")>=0){
+    return true;
+  }
+  return false;
 }

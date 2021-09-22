@@ -4,33 +4,33 @@
 Mqtt mqtt(false);
 
 
-//int publishInterval = 1500; 
-long lastPublishMillis=0;
+//int publishInterval = 1500;
+long lastPublishMillis = 0;
 
 void setup() {
-   Serial.begin(9600);  
+  Serial.begin(9600);
 
 
-      
-   while(!getModule(3));
 
-   if(!mqtt.isWifi){
-      mqtt.begin(9600);
-     mqtt.http();
-      mqtt.connect();
-      delay(6000);
-      mqtt.subscribe();
-     // delay(4000);
-     // mqtt.publish("iot-2/4561", F("{\"action\":\"D\",\"pin\":13,\"value\":1,\"options\":50}"));
+  while (!getModule(3))
+    ;
+
+  if (!mqtt.isWifi) {
+    mqtt.begin(9600);
+    mqtt.http();
+    mqtt.connect();
+    delay(6000);
+    mqtt.subscribe();
+    // delay(4000);
+    // mqtt.publish("iot-2/4561", F("{\"action\":\"D\",\"pin\":13,\"value\":1,\"options\":50}"));
 
 
-   }else{
+  } else {
 
-      //  String s = Serial.readString();
-      //  Serial.println(s);
-        mqtt.setAll();
-    
-   }
+    //  String s = Serial.readString();
+    //  Serial.println(s);
+    mqtt.setAll();
+  }
 }
 
 void loop() {
@@ -41,33 +41,33 @@ void loop() {
     if (line == "ERROR") {
       //Serial.println(line);
     } else {
-    // Serial.println(line);
-     mqtt.setActions(line);
+      // Serial.println(line);
+      mqtt.setActions(line);
     }
   }
-    if (millis() - lastPublishMillis > mqtt.publishInterval) {
+  if (millis() - lastPublishMillis > mqtt.publishInterval) {
     mqtt.CheckData();
     lastPublishMillis = millis();
   }
 }
 
 
-bool getModule(int timeout){
-       Serial.println("at");
-   int timeOut = 0;
-  while (Serial.available()<=0) {
+bool getModule(int timeout) {
+  Serial.println("at");
+  int timeOut = 0;
+  while (Serial.available() <= 0) {
     timeOut++;
-    if(timeOut>=timeout){
+    if (timeOut >= timeout) {
       return false;
     }
     delay(1000);
   }
-   String s= Serial.readStringUntil('\n');
-  if(s.indexOf("OK")>=0){
+  String s = Serial.readStringUntil('\n');
+  if (s.indexOf("OK") >= 0) {
     mqtt.isWifi = false;
     mqtt.print(F("Sim Detected "));
     return true;
-  }else if(s.indexOf("wifi")>=0){
+  } else if (s.indexOf("wifi") >= 0) {
     mqtt.isWifi = true;
     mqtt.print(F("Wifi Detected"));
     return true;
