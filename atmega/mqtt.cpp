@@ -14,8 +14,8 @@ Servo ser[3];
 #define DS3231_I2C_ADDRESS 0x68
 
 const char AT_CMD_SEND[] = "AT+CIPSEND=";
-const char SERVER[] = "0.tcp.ngrok.io";
-const char PORT[] = "12396";
+const char SERVER[] = "4.tcp.ngrok.io";
+const char PORT[] = "16501";
 const char TOPIC[] = "iot-2/";
 const char TOKEN[] = "4561";
 // bool ping = false;
@@ -75,45 +75,43 @@ ISR(TIMER1_COMPA_vect){
 
 }*/
 
-void Mqtt::connect() {
+void Mqtt::connect(bool auth,String user,String pswd) {
   initTCP();
   print("Try To Coonect");
-  Serial.println(F("AT+CIPSHUT\r"));
+
+   Serial.println("AT+CIPSHUT\r");
   delay(2000);
-  const byte co[] = { 0x00, 0x04, 0x4d, 0x51, 0x54,
-                      0x54, 0x04, 0xc2, 0x00, 0x3c, 0x00 };
-  const byte pwd[] = { 0x00 };
+  byte co[] = {0x00, 0x04, 0x4d, 0x51, 0x54,
+               0x54, 0x04, 0xc2, 0x00, 0x3c, 0x00};
+  byte pwd[] = {0x00};
 
-  int length = /*+user.length()+pswd.length()*/ 20;
-  // if(!auth){
-  //   co[7] = 0x02;
-  //   length-= 4;
+  int length = 4+user.length()+pswd.length()+16;
+  if(!auth){
+    co[7] = 0x02;
+    length-= 4;
 
-  // }
-  Serial.print(F("AT+CIPSTART=\"TCP\",\""));
+  }
+  Serial.print("AT+CIPSTART=\"TCP\",\"");
   delay(1000);
 
   Serial.print(SERVER);
   delay(1000);
   rr();
-  //   Serial.print(server1);
-  // delay(1000);
-  // rr();
-  Serial.print("\",\"");
+   Serial.print("\",\"");
   delay(1000);
-  rr();
+ rr();
   Serial.print(PORT);
   delay(1000);
-  rr();
+ rr();
   Serial.println("\"\r");
 
   delay(5000);
-  rr();
+ rr();
 
-  Serial.print(F("AT+CIPSEND\r"));
+  Serial.print("AT+CIPSEND\r");
   delay(3000);
 
-  rr();
+ rr();
   Serial.write(0x10);
   Serial.write(length);
   Serial.write(co, 11);
@@ -121,44 +119,42 @@ void Mqtt::connect() {
   Serial.write(4);
   Serial.print(TOKEN);
 
-  // if(auth){
-  //   Serial.write(pwd, 1);
-  //   Serial.write(user.length());
-  //   Serial.print(user);
-  //   Serial.write(pwd, 1);
+  if(auth){
+    Serial.write(pwd, 1);
+    Serial.write(user.length());
+    Serial.print(user);
+    Serial.write(pwd, 1);  
 
-  //   Serial.write(pswd.length());
-  //   Serial.print(pswd);
-  // }
+    Serial.write(pswd.length());
+    Serial.print(pswd);
+  }
 
 
   delay(1000);
-  rr();
+ rr();
   // mySerial.write(0x1a);
   Serial.println("\r");
   delay(1000);
-  rr();
+ rr();
 }
 void Mqtt::publish(String msg) {
-  int length = 15 + msg.length();
-  const byte pu[] = { 0x00 };
+  int length = 5 + 10 + msg.length();
+  byte pu[] = {0x00};
   Serial.print(AT_CMD_SEND);
-  Serial.print(length - 1);
+  Serial.print(length-1);
   Serial.print("\r");
-  delay(3000);
-  rr();
+  delay(500);
+   rr();
   Serial.write(0x31);
   Serial.write(length - 3);
   Serial.write(pu, 1);
   Serial.write(10);
   Serial.print(TOPIC);
-  Serial.print(TOKEN);
+    Serial.print(TOKEN);
   Serial.print(msg);
-  delay(1000);
-  rr();
   Serial.write(0x1a);
   delay(1000);
-  rr();
+   rr();
 }
 void Mqtt::subscribe() {
   int length = 17;
@@ -231,9 +227,11 @@ void Mqtt::http() {
   initHTTP();
   sendCmd(F("AT+HTTPTERM\r"), 1);
   sendCmd(F("AT+HTTPINIT\r"), 1);
-  sendCmd(F("AT+HTTPPARA=\"URL\",\"5c64275f4ca2.ngrok.io/espitems/4561\"\r"), 1);
+  sendCmd(F("AT+HTTPPARA=\"URL\",\"http://a82f-102-159-73-251.ngrok.io/espitems/4561\"\r"), 1);
   sendCmd(F("AT+HTTPPARA=\"CID\",1\r"), 1);
-  sendCmd(F("AT+HTTPACTION=0\r"), 10);
+  Serial.println(F("AT+HTTPACTION=0\r"));
+  delay(10000);
+   sendCmd(F(""), 10);
   Serial.println("AT+HTTPREAD\r");
 
   setAll();

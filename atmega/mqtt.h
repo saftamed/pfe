@@ -21,9 +21,7 @@ class Mqtt {
 public:
   Mqtt(bool displayMsg);
   void begin(int baudRate = 4800);
-  void connect(/*String server, String server1, String port, String s,
-               bool auth = false, String user = "", String pswd = ""*/
-  );
+  void connect( bool auth = false, String user = "", String pswd = "");
   void publish(String msg);
   void print(String msg, int l = 1);
   void beginDebug();

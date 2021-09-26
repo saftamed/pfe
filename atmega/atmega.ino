@@ -16,10 +16,11 @@ void setup() {
     ;
 
   if (!mqtt.isWifi) {
+    delay(5000);
     mqtt.begin(9600);
     mqtt.http();
     mqtt.connect();
-    delay(6000);
+    delay(1000);
     mqtt.subscribe();
     // delay(4000);
     // mqtt.publish("iot-2/4561", F("{\"action\":\"D\",\"pin\":13,\"value\":1,\"options\":50}"));
