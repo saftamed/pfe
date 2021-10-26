@@ -43,7 +43,7 @@ private:
   void initHTTP();
   byte bcdToDec(byte val);
   byte decToBcd(byte val);
-  bool debug = false;
+  bool debug = true;
   void rr();
   char line[LINE_BUFFER_LENGTH];
   int lineIndex = 0;

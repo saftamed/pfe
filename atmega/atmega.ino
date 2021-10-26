@@ -10,6 +10,8 @@ long lastPublishMillis = 0;
 void setup() {
   Serial.begin(9600);
 
+mqtt.beginDebug();
+mqtt.print("Welcome",0);
 
 
   while (!getModule(3))
@@ -30,7 +32,9 @@ void setup() {
 
     //  String s = Serial.readString();
     //  Serial.println(s);
+    mqtt.print("get old data..");
     mqtt.setAll();
+    mqtt.print("Data accepted.");
   }
 }
 
@@ -71,6 +75,7 @@ bool getModule(int timeout) {
   } else if (s.indexOf("wifi") >= 0) {
     mqtt.isWifi = true;
     mqtt.print(F("Wifi Detected"));
+    delay(1000);
     return true;
   }
   return false;

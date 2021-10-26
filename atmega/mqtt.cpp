@@ -30,18 +30,26 @@ const long interval = 50000;
 //oftwareSerial mySerial(10,11);
 //SoftwareSerial mySerial(14, 12);
 Mqtt::Mqtt(bool displayMsg) {
-  beginDebug();
-  // print("hi");
+  // beginDebug();
+  //  print("hi",0);
 }
 
 void Mqtt::beginDebug() {
-  if (!debug) return;
-  lcd.init();  // initialize
+ // if (!debug) return;
+  // lcd.init();  // initialize
+  // lcd.backlight();
+  // 
+   lcd.init();                      // initialize the lcd 
+  lcd.init();
+  // Print a message to the LCD.
   lcd.backlight();
+
 }
-void Mqtt::print(String msg, int l = 1) {
-  if (!debug) return;
-  lcd.setCursor(l, 0);  //(C,R)
+void Mqtt::print(String msg, int l ) {
+   if (!debug) return;
+    lcd.setCursor(0,l);
+  lcd.print("                ");
+  lcd.setCursor(0,l);
   lcd.print(msg);
   delay(100);
 }
@@ -197,7 +205,7 @@ bool Mqtt::sendCmd(String cmd, int timeout) {
   }
   String s = Serial.readString();
   //Serial.println(s);
-  if (s.indexOf("ok") >= 0) {
+  if (s.indexOf("OK") >= 0) {
     return true;
   }
   return false;
@@ -334,7 +342,7 @@ void Mqtt::sendData(input r) {
   payload += String(r.value, DEC);
   payload += "\"}";
 
-  print("Send Data" + r.action);
+  print("Send Data" + r.action,1);
 
   if (isWifi) {
     Serial.println(payload);
@@ -458,7 +466,11 @@ void Mqtt::setActions(String line) {
   }
   String ss = (String)((const char*)obj["action"]);
   // Serial.println(ss);
-  print(ss + ": " + (const char*)obj["pin"] + " = " + (const char*)obj["value"]);
+  String sm = ss + ":";
+  sm += (int)obj["pin"] ;
+  sm += " = ";
+  sm+=(const char*)obj["value"];
+  print(sm,1);
   if (ss == "D") {
     pinMode((int)obj["pin"], OUTPUT);
     String s = (const char*)obj["value"];
@@ -478,9 +490,10 @@ void Mqtt::setActions(String line) {
     }
   } else if (ss == "A" || ss == "C") {
     int ss = getIndex((int)obj["pin"]);
-    record[ss] = { (int)obj["pin"], record[ss].value, ss == "A" ? 'A' : 'C' };
+    record[ss] = { (int)obj["pin"], record[ss].value, ss == 
+    "A" ? 'A' : 'C' };
   } else if (ss == "I") {
-    pinMode((int)obj["pin"], INPUT);
+    pinMode((int)obj["pin"], INPUT_PULLUP);
     int ss = getIndex((int)obj["pin"]);
     record[ss] = { (int)obj["pin"], record[ss].value, 'I' };
   } else if (ss == "T") {
@@ -525,10 +538,12 @@ void Mqtt::setActions(String line) {
   } else if (ss == "Z") {
     // String s = (const char*)obj["host"];
     debug = (int)obj["debug"];
+    if(!debug)
+    beginDebug();
     publishInterval = (int)obj["tri"];
   } else if (ss == "L") {
     String msg = (const char*)obj["m"];
-    print(msg, 2);
+    print(msg, 0);
   }
 }
 void Mqtt::TimeSet(String obj,int pin) {

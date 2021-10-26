@@ -9,20 +9,20 @@
 //-------- Customise these values -----------
 const char* token  = "4561"; 
 // const char* password = "u9pHINUEal";
- String ssid = "TOPNET_19E8";
- String password = "u9pHINUEal";
+ String ssid = "safta";
+ String password = "00000000";
 String topic = "iot-2/"+String(token);
 //-------- Customise the above values --------
 
-IPAddress local_IP(192, 168, 1, 184);
+IPAddress local_IP(192, 168, 5, 184);
 // Set your Gateway IP address
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 0, 0);
+IPAddress gateway(192, 168, 5, 1);
+IPAddress subnet(255, 255, 255, 0);
 IPAddress primaryDNS(8, 8, 8, 8); // optional
 IPAddress secondaryDNS(8, 8, 4, 4);
 
-String httpServeur = "http://192.168.1.15/espitems/"+String(token);
-char serverr[] = "192.168.1.15";
+String httpServeur = "http://192.168.5.1/espitems/"+String(token);
+char serverr[] = "192.168.5.1";
 char clientId[] = "safta001";
 
 
@@ -74,7 +74,7 @@ void serveForPwd(){
     WiFi.mode(WIFI_AP_STA);
   //Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");    
   //Serial.print("Configuring access point...");
-  WiFi.softAP("safta", "00000000");
+  WiFi.softAP("smart iot", "00000000");
   IPAddress myIP = WiFi.softAPIP();
   //Serial.print("AP IP address: ");
   //Serial.println(myIP);
@@ -100,10 +100,10 @@ void setup() {
 // Serial.println("wifi 1");
 
   serveForPwd();
-  // while(pwd){
-  // server.handleClient();
-  // }
-  // WiFi.softAPdisconnect (true);
+  while(pwd){
+  server.handleClient();
+  }
+  //WiFi.softAPdisconnect (true);
 
 
   wifiConnect();
